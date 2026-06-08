@@ -1,3 +1,37 @@
+Local Setup
+https://www.aem.live/developer/tutorial
+clone boilerplate code from  https://github.com/adobe/aem-boilerplate
+give cmd npm install -g @adobe/aem-cli
+To start eds give cmd as aem up
+Starts with 3000 port by default local
+Enter da.live and give ur site url as below https://main--aem-boilerplate--adobe.aem.page   (main-branch name, aemboilerplate - repo name, adobe - org name)
+https://main--eds--charan7003.aem.page/
+
+Adobe git repository -> use template -> your personal github repo (sign in before) 
+Now the repo will be in ur personal github
+Register aem code sync app to ur personal github
+The only remaining step in GitHub is to install the AEM Code Sync GitHub App on your repository by visiting this link:  https://github.com/apps/aem-code-sync/installations/new
+
+AEM Code Sync registered
+Thank you for registering the AEM Code Sync GitHub App. Your site is now ready.
+Welcome to Adobe Experience Manager.
+We made recent changes to the setup process for Adobe Experience Manager.
+If you have any feedback, please let us know, either on Slack, Teams or Discord.
+What we did:
+• Set up AEM for charan7003 / eds.
+• Made charan7003@gmail.com* an admin.
+• Started AEM Code Sync for selected GitHub repositories.
+*We are using the primary email address set in the GitHub account that just installed AEM Code Sync as the default admin. If this is not the account you want to use as the default admin, feel free to change it in the User Admin Tool.
+What's next:
+Create your content:
+https://da.live/start?org=charan7003&site=eds
+Check your site:
+Preview:  https://main--eds--charan7003.aem.page/
+Live:  https://main--eds--charan7003.aem.live/
+Add users:
+Use the admin tool: https://labs.aem.live/tools/user-admin/index.html
+
+
 Introduction to Edge Delivery Services
 
 After completing this module, you will be able to:
