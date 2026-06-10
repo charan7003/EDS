@@ -1,20 +1,81 @@
-footer {
-  background-color: var(--light-color);
-  font-size: var(--body-font-size-xs);
+.footer-wrapper {
+  background-color: #404040; /* Stryker Dark Grey */
+  color: #ffffff;
+  padding: 30px 20px;
 }
 
-footer .footer > div {
-  margin: auto;
-  max-width: 1200px;
-  padding: 40px 24px 24px;
+/* Horizontal Top Bar */
+.footer-top-bar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #555;
+  padding-bottom: 15px;
+  margin-bottom: 25px;
+  font-size: 11px;
 }
 
-footer .footer p {
-  margin: 0;
+.footer-column {
+  padding: 0 15px;
+  border-right: 1px solid #777; /* The separator "pipes" */
 }
 
-@media (width >= 900px) {
-  footer .footer > div {
-    padding: 40px 32px 24px;
-  }
+/* Push Icons to Far Right */
+.footer-column:last-child {
+  border-right: none;
+  margin-left: auto;
+  display: flex;
+  gap: 15px;
+}
+
+/* Yellow Hover for Text Links */
+.footer a {
+  color: #fff;
+  text-decoration: none;
+  padding: 5px 8px;
+}
+
+.footer a:not(.social-link):hover {
+  background-color: #ffb81c; /* Yellow */
+  color: #000;
+}
+
+/* Icon visibility: Forces SVGs to be white */
+.footer .icon img {
+  width: 22px;
+  height: 22px;
+  filter: invert(1) brightness(2) !important;
+  display: block;
+}
+
+/* Disable background on social icons during hover */
+.footer a.social-link:hover {
+  background-color: transparent !important;
+}
+
+/* Main Stacking Links */
+.footer-vertical-row {
+  margin-bottom: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+/* Main Stacked Links (TRADEMARKS, etc.) */
+.footer-vertical-row {
+  margin-bottom: 12px; /* Slightly tighter spacing */
+  text-transform: uppercase;
+  font-weight: 500; /* Medium weight instead of bold */
+  font-size: 11px; /* Smaller, matches the legal bar size */
+  letter-spacing: 0.05rem; /* Improves readability at small sizes */
+}
+
+/* Ensure the links inside these rows inherit the small size */
+.footer-vertical-row a {
+  padding: 4px 0; /* Remove side padding to keep them left-aligned */
+  font-size: 11px;
+}
+
+/* Adjust the Icons slightly to match the smaller text height */
+.footer .icon img {
+  width: 20px;
+  height: 20px;
+  filter: invert(1) brightness(2);
 }
