@@ -1,0 +1,41 @@
+{
+  "data": [
+    {
+      "path": "/",
+      "title": "Home",
+      "description": "Welcome to our Edge Delivery Services site.",
+      "image": "/icons/icon.svg",
+      "fullText": "This starter site demonstrates custom indexing, metadata-driven retrieval, and full text search.",
+      "metadata": {
+        "category": "general",
+        "audience": "all",
+        "region": "global",
+        "tags": ["home", "overview", "eds"]
+      }
+    },
+    {
+      "path": "/docs/search",
+      "title": "Search Setup",
+      "description": "How to configure custom index fields and metadata filters.",
+      "fullText": "Define custom properties in metadata and query with syntax like category:docs or URL params such as meta.category=docs. Full text terms are matched across title, description, body, and tags.",
+      "metadata": {
+        "category": "docs",
+        "audience": "developer",
+        "region": "global",
+        "tags": ["search", "metadata", "full-text"]
+      }
+    },
+    {
+      "path": "/products/platform",
+      "title": "Platform",
+      "description": "Product platform details and capabilities.",
+      "fullText": "Our platform supports high-performance content delivery, metadata indexing, and configurable search experiences.",
+      "metadata": {
+        "category": "product",
+        "audience": "buyer",
+        "region": "us",
+        "tags": ["platform", "features", "performance"]
+      }
+    }
+  ]
+}

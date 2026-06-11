@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "Key": "Search Placeholder",
+      "Text": "Search..."
+    },
+    {
+      "Key": "Search No Results",
+      "Text": "No results found."
+    }
+  ]
+}

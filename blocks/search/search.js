@@ -2,9 +2,69 @@ import {
   createOptimizedPicture,
   decorateIcons,
 } from '../../scripts/aem.js';
-import { fetchPlaceholders } from '../../scripts/placeholders.js';
+import fetchPlaceholders from '../../scripts/placeholders.js';
 
 const searchParams = new URLSearchParams(window.location.search);
+const dataCache = new Map();
+
+function normalizeText(value) {
+  return String(value || '').toLowerCase();
+}
+
+function stringifyFieldValue(value) {
+  if (Array.isArray(value)) {
+    return value.join(' ');
+  }
+  if (value && typeof value === 'object') {
+    return Object.values(value).join(' ');
+  }
+  return String(value || '');
+}
+
+function getRecordFieldValue(record, field) {
+  if (!record || !field) return '';
+  const metadataValue = record.metadata ? record.metadata[field] : undefined;
+  const value = metadataValue !== undefined ? metadataValue : record[field];
+  return stringifyFieldValue(value);
+}
+
+function getMetadataFiltersFromUrl() {
+  return [...searchParams.entries()]
+    .filter(([key, value]) => key.startsWith('meta.') && value)
+    .map(([key, value]) => ({
+      key: key.replace('meta.', '').trim(),
+      value: normalizeText(value).trim(),
+    }))
+    .filter((filter) => filter.key && filter.value);
+}
+
+function parseSearchInput(searchValue) {
+  const metadataFilters = [];
+  const searchTerms = [];
+
+  searchValue
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter((part) => part)
+    .forEach((token) => {
+      const separatorIdx = token.indexOf(':');
+      if (separatorIdx > 0 && separatorIdx < token.length - 1) {
+        const key = token.substring(0, separatorIdx).trim();
+        const value = normalizeText(token.substring(separatorIdx + 1).trim());
+        if (key && value) {
+          metadataFilters.push({ key, value });
+          return;
+        }
+      }
+
+      searchTerms.push(normalizeText(token));
+    });
+
+  return {
+    searchTerms,
+    metadataFilters,
+  };
+}
 
 function findNextHeading(el) {
   let preceedingEl = el.parentElement.previousElement || el.parentElement.parentElement;
@@ -83,6 +143,13 @@ export async function fetchData(source) {
   return json.data;
 }
 
+async function getData(source) {
+  if (!dataCache.has(source)) {
+    dataCache.set(source, fetchData(source).then((data) => data || []));
+  }
+  return dataCache.get(source);
+}
+
 function renderResult(result, searchTerms, titleTag) {
   const li = document.createElement('li');
   const a = document.createElement('a');
@@ -149,43 +216,86 @@ async function renderResults(block, config, filteredData, searchTerms) {
 }
 
 function compareFound(hit1, hit2) {
+  if (hit1.score !== hit2.score) {
+    return hit2.score - hit1.score;
+  }
   return hit1.minIdx - hit2.minIdx;
 }
 
-function filterData(searchTerms, data) {
-  const foundInHeader = [];
-  const foundInMeta = [];
+function hasMetadataMatch(result, metadataFilters) {
+  if (!metadataFilters.length) return true;
+
+  return metadataFilters.every(({ key, value }) => {
+    const fieldValue = normalizeText(getRecordFieldValue(result, key));
+    return fieldValue.includes(value);
+  });
+}
+
+function findMinIndex(term, fields) {
+  const matchIndexes = fields
+    .map((field) => field.indexOf(term))
+    .filter((idx) => idx >= 0);
+  return matchIndexes.length ? Math.min(...matchIndexes) : -1;
+}
+
+function filterData(searchTerms, metadataFilters, data) {
+  if (!searchTerms.length && !metadataFilters.length) {
+    return [];
+  }
+
+  const ranked = [];
 
   data.forEach((result) => {
-    let minIdx = -1;
-
-    searchTerms.forEach((term) => {
-      const idx = (result.header || result.title).toLowerCase().indexOf(term);
-      if (idx < 0) return;
-      if (minIdx < idx) minIdx = idx;
-    });
-
-    if (minIdx >= 0) {
-      foundInHeader.push({ minIdx, result });
+    if (!hasMetadataMatch(result, metadataFilters)) {
       return;
     }
 
-    const metaContents = `${result.title} ${result.description} ${result.path.split('/').pop()}`.toLowerCase();
+    const title = normalizeText(result.header || result.title);
+    const description = normalizeText(result.description);
+    const fullText = normalizeText(result.fullText || result.content || result.body);
+    const tags = normalizeText(getRecordFieldValue(result, 'tags'));
+    const path = normalizeText(result.path);
+
+    let minIdx = Number.MAX_SAFE_INTEGER;
+    let score = 0;
+    let matches = 0;
+
     searchTerms.forEach((term) => {
-      const idx = metaContents.indexOf(term);
-      if (idx < 0) return;
-      if (minIdx < idx) minIdx = idx;
+      const titleIdx = title.indexOf(term);
+      const descriptionIdx = description.indexOf(term);
+      const fullTextIdx = fullText.indexOf(term);
+      const tagsIdx = tags.indexOf(term);
+      const pathIdx = path.indexOf(term);
+
+      if (titleIdx >= 0) score += 12;
+      if (descriptionIdx >= 0) score += 7;
+      if (fullTextIdx >= 0) score += 4;
+      if (tagsIdx >= 0) score += 3;
+      if (pathIdx >= 0) score += 1;
+
+      const idx = findMinIndex(term, [title, description, fullText, tags, path]);
+      if (idx >= 0) {
+        matches += 1;
+        minIdx = Math.min(minIdx, idx);
+      }
     });
 
-    if (minIdx >= 0) {
-      foundInMeta.push({ minIdx, result });
+    if (!searchTerms.length) {
+      score = 1;
+      minIdx = 0;
+      matches = 1;
+    }
+
+    if (matches > 0) {
+      ranked.push({
+        minIdx,
+        score,
+        result,
+      });
     }
   });
 
-  return [
-    ...foundInHeader.sort(compareFound),
-    ...foundInMeta.sort(compareFound),
-  ].map((item) => item.result);
+  return ranked.sort(compareFound).map((item) => item.result);
 }
 
 async function handleSearch(e, block, config) {
@@ -197,15 +307,18 @@ async function handleSearch(e, block, config) {
     window.history.replaceState({}, '', url.toString());
   }
 
-  if (searchValue.length < 3) {
+  const parsedQuery = parseSearchInput(searchValue);
+  const urlMetadataFilters = getMetadataFiltersFromUrl();
+  const metadataFilters = [...urlMetadataFilters, ...parsedQuery.metadataFilters];
+
+  if (parsedQuery.searchTerms.join('').length < 3 && !metadataFilters.length) {
     clearSearch(block);
     return;
   }
-  const searchTerms = searchValue.toLowerCase().split(/\s+/).filter((term) => !!term);
 
-  const data = await fetchData(config.source);
-  const filteredData = filterData(searchTerms, data);
-  await renderResults(block, config, filteredData, searchTerms);
+  const data = await getData(config.source);
+  const filteredData = filterData(parsedQuery.searchTerms, metadataFilters, data);
+  await renderResults(block, config, filteredData, parsedQuery.searchTerms);
 }
 
 function searchResultsContainer(block) {
